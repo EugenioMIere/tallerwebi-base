@@ -1,14 +1,14 @@
 package com.tallerwebi.presentacion;
 
-import com.tallerwebi.dominio.ServicioCartaImpl;
+import com.tallerwebi.dominio.ServicioCarta;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.servlet.ModelAndView;
 
 
 public class ControladorCarta {
 
-    private final ServicioCartaImpl servicioCarta;
-    public ControladorCarta(ServicioCartaImpl servicioCarta) {
+    private final ServicioCarta servicioCarta;
+    public ControladorCarta(ServicioCarta servicioCarta) {
         this.servicioCarta = servicioCarta;
     }
 

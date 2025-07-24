@@ -28,9 +28,11 @@ public class RepositorioClienteImpl implements RepositorioCliente {
         String hql = "FROM Cliente WHERE dni=:dni";
         Query query = this.sessionFactory.getCurrentSession().createQuery(hql);
         query.setParameter("dni", dni);
-        Cliente cliente = (Cliente) query.getSingleResult();
-
-        return cliente;
+        try {
+            return (Cliente) query.getSingleResult();
+        } catch (javax.persistence.NoResultException e) {
+            return null;
+        }
     }
 
     @Override

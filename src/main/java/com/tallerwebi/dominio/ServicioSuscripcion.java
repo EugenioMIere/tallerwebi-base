@@ -1,6 +1,7 @@
 package com.tallerwebi.dominio;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Transactional
 public interface ServicioSuscripcion {
@@ -8,5 +9,13 @@ public interface ServicioSuscripcion {
 
     Cliente obtenerClientePorDni(int dni);
 
-    void actualizarCliente(Cliente cliente);
+
+    String suscribirCliente(int dni, String tipoSuscripcion);
+
+
+    List<Cliente> ObtenerporTipoSuscripcion(String básica);
+
+    void eliminarSuscripcion(int dni);
+
+    List<Cliente> obtenerTodos();
 }

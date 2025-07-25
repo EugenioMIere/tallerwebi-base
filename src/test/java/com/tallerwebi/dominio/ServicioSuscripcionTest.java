@@ -3,10 +3,14 @@ package com.tallerwebi.dominio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.*;
 
 public class ServicioSuscripcionTest {
     private ServicioSuscripcion servicioSuscripcion;
@@ -18,6 +22,7 @@ public class ServicioSuscripcionTest {
         servicioSuscripcion = new ServicioSuscripcionImpl(repositorioCliente);
     }
 
+
     @Test
     public void queSePuedaRegistrarUnClienteConDni() {
 
@@ -28,6 +33,20 @@ public class ServicioSuscripcionTest {
 
 
         assertThat(resultado, is(true));
+
+    }
+    @Test
+    public void dadoQueExistaUnClientePuedaObtenerloPorDni() {
+
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+
+        when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+        Cliente clienteBuscado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+
+        assertThat(clienteBuscado.getDni(), is(12345678));
+        assertThat(clienteBuscado.getTipoSuscripcion(), is("Básica"));
 
     }
     @Test
@@ -64,25 +83,129 @@ public class ServicioSuscripcionTest {
 
     @Test
     public void dadoQueExistaUnClientePuedaContratarUnaNuevaSuscripcion() {
-
         Cliente cliente = new Cliente();
         cliente.setDni(12345678);
 
-        servicioSuscripcion.registrarCliente(cliente);
+        when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+        servicioSuscripcion.suscribirCliente(cliente.getDni(), "Premium");
+        Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+
+        verify(repositorioCliente).suscribir(12345678, "Premium");
+        assertThat(clienteActualizado.getTipoSuscripcion(), is("Premium"));
+    }
+
+
+    @Test
+    public void dadoQueExistaUnClienteConUnaSuscripcionActivaDelMismoTipoNoPuedaContratarUnaNuevaSuscripcion() {
+
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+
         when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
         Cliente clienteBuscado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
-        //enviar en el metodo dni y la suscripcion que se quiere contratar, sino siemnpre devuelve verdadero
-
-        clienteBuscado.setTipoSuscripcion("Premium");
-        servicioSuscripcion.actualizarCliente(clienteBuscado);
-
+        String status = servicioSuscripcion.suscribirCliente(clienteBuscado.getDni(), "Básica");
         Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(clienteBuscado.getDni());
 
+        verify(repositorioCliente, never()).suscribir(clienteBuscado.getDni(), clienteBuscado.getTipoSuscripcion());
+        assertThat(status, is("Suscripción ok"));
+        assertThat(clienteActualizado.getTipoSuscripcion(), is("Básica"));
+
+
+    }
+    @Test
+    public void dadoQueExistaUnClienteConUnaSuscripcionActivaDeDistintoTipoPuedaContratarUnaNuevaSuscripcion() {
+
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+
+        when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+        Cliente clienteBuscado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+        String status = servicioSuscripcion.suscribirCliente(clienteBuscado.getDni(), "Premium");
+        Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(clienteBuscado.getDni());
+
+        verify(repositorioCliente).suscribir(12345678, "Premium");
+        assertThat(status, is("Suscripción ok"));
         assertThat(clienteActualizado.getTipoSuscripcion(), is("Premium"));
+
 
     }
 
-    //probar que no se pueda contratar una suscripcion si si el cliente ya tiene una suscripcion activa del mismo tipo
+    @Test
+    public void quePuedaObtenerClientePorTipoSuscripcion() {
 
-    //
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+
+        when(repositorioCliente.obtenerPorTipoSuscripcion("Básica")).
+                thenReturn(Arrays.asList(cliente));
+        List<Cliente> clientes = servicioSuscripcion.ObtenerporTipoSuscripcion("Básica");
+
+        assertThat(clientes.size(), is(1));
+        assertThat(clientes.get(0).getDni(), is(12345678));
+    }
+
+    @Test
+    public void quePuedaObtenerClientesPorTipoSuscripcion() {
+        Cliente cliente1 = new Cliente();
+        cliente1.setDni(12345678);
+        cliente1.setTipoSuscripcion("Básica");
+
+        Cliente cliente2 = new Cliente();
+        cliente2.setDni(87654321);
+        cliente2.setTipoSuscripcion("Básica");
+
+        when(repositorioCliente.obtenerPorTipoSuscripcion("Básica"))
+                .thenReturn(Arrays.asList(cliente1, cliente2));
+        List<Cliente> clientes = servicioSuscripcion.ObtenerporTipoSuscripcion("Básica");
+
+        assertThat(clientes.size(), is(2));
+        assertThat(clientes.get(0).getDni(), is(12345678));
+        assertThat(clientes.get(1).getDni(), is(87654321));
+    }
+    //eliminar suscripción de un cliente
+    @Test
+    public void dadoQueExistaUnClientePuedaEliminarSuSuscripcion() {
+
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+
+        when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+        doAnswer(invocation -> {
+            cliente.setTipoSuscripcion(null);
+            return null;
+        }).when(repositorioCliente).eliminar(cliente.getDni());
+
+        servicioSuscripcion.eliminarSuscripcion(cliente.getDni());
+        Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+
+        verify(repositorioCliente).eliminar(cliente.getDni());
+        assertThat(clienteActualizado.getTipoSuscripcion(), is(nullValue()));
+
+    }
+
+    //obtener todos los clientes
+    @Test
+    public void quePuedaObtenerTodosLosClientes() {
+
+        Cliente cliente1 = new Cliente();
+        cliente1.setDni(12345678);
+        cliente1.setTipoSuscripcion("Básica");
+
+        Cliente cliente2 = new Cliente();
+        cliente2.setDni(87654321);
+        cliente2.setTipoSuscripcion("Premium");
+
+        when(repositorioCliente.obtenerTodos()).thenReturn(Arrays.asList(cliente1, cliente2));
+        List<Cliente> clientes = servicioSuscripcion.obtenerTodos();
+
+        assertThat(clientes.size(), is(2));
+        assertThat(clientes.get(0).getDni(), is(12345678));
+        assertThat(clientes.get(1).getDni(), is(87654321));
+    }
+
+
 }

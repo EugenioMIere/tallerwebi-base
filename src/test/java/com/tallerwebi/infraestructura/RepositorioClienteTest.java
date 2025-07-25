@@ -148,7 +148,7 @@ public class RepositorioClienteTest {
         this.sessionFactory.getCurrentSession().save(cliente);
         assertThat(this.repositorioCliente.obtenerTodos().size(), is(1));
 
-        this.repositorioCliente.eliminar(cliente.getId());
+        this.repositorioCliente.eliminar(cliente.getDni());
 
         var clientes = this.repositorioCliente.obtenerTodos();
         assertThat(clientes.size(), is(0));
@@ -156,10 +156,10 @@ public class RepositorioClienteTest {
 
     @Test
     public void cuandoEliminoUnClienteQueNoExisteEntoncesLanzaExcepcion() {
-        Long idInexistente = 999L;
+
 
         try {
-            this.repositorioCliente.eliminar(idInexistente);
+            this.repositorioCliente.eliminar(11223344); // Intento eliminar un ID que no existe
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), is("No se eliminó ningún cliente"));
         }
@@ -171,9 +171,21 @@ public class RepositorioClienteTest {
         this.sessionFactory.getCurrentSession().save(cliente);
 
         try {
-            this.repositorioCliente.eliminar(cliente.getId() + 1); // Intento eliminar un ID que no existe
+            this.repositorioCliente.eliminar(cliente.getDni() + 1); // Intento eliminar un ID que no existe
         } catch (RuntimeException e) {
             assertThat(e.getMessage(), is("No se eliminó ningún cliente"));
         }
+    }
+    @Test
+    public void dadoQueExistaUnClientePuedaSuscribirse() {
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+        this.sessionFactory.getCurrentSession().save(cliente);
+
+        this.repositorioCliente.suscribir(cliente.getDni(), "Premium");
+
+        Cliente clienteActualizado = this.repositorioCliente.obtenerPorDni(cliente.getDni());
+        assertThat(clienteActualizado.getTipoSuscripcion(), is("Premium"));
     }
 }

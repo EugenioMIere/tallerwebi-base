@@ -53,14 +53,25 @@ public class RepositorioClienteImpl implements RepositorioCliente {
     }
 
     @Override
-    public void eliminar(Long id) {
-        String hql = "DELETE FROM Cliente WHERE id = :id";
+    public void eliminar(int dni) {
+        String hql = "DELETE FROM Cliente WHERE dni = :dni";
         Query query = this.sessionFactory.getCurrentSession().createQuery(hql);
-        query.setParameter("id", id);
+        query.setParameter("dni", dni);
         int cantidadDeEliminaciones = query.executeUpdate();
         if (cantidadDeEliminaciones == 0) {
             throw new RuntimeException("No se eliminó ningún cliente");
         }
+    }
+
+    @Override
+    public void suscribir(int dni, String tipoSuscripcion) {
+        Cliente cliente = this.obtenerPorDni(dni);
+        if (cliente == null) {
+            throw new RuntimeException("Cliente no encontrado con DNI: " + dni);
+        }
+        cliente.setTipoSuscripcion(tipoSuscripcion);
+        this.sessionFactory.getCurrentSession().update(cliente);
+
     }
 
 

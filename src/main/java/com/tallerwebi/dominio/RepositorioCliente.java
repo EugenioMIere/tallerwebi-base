@@ -11,5 +11,7 @@ public interface RepositorioCliente {
 
     List<Cliente> obtenerTodos();
 
-    void eliminar(Long id);
+    void eliminar(int dni);
+
+    void suscribir(int dni, String tipoSuscripcion);
 }

@@ -23,7 +23,6 @@ public class ServicioSuscripcionTest {
 
         Cliente cliente = new Cliente();
         cliente.setDni(12345678);
-        cliente.setTipoSuscripcion("Premium");
 
         Boolean resultado = servicioSuscripcion.registrarCliente(cliente);
 
@@ -36,11 +35,9 @@ public class ServicioSuscripcionTest {
 
         Cliente cliente = new Cliente();
         cliente.setDni(12345678);
-        cliente.setTipoSuscripcion("Premium");
 
         Cliente nuevoCliente = new Cliente();
         nuevoCliente.setDni(12345678);
-        nuevoCliente.setTipoSuscripcion("Básico");
 
         when(repositorioCliente.obtenerPorDni(12345678)).thenReturn(null)
                 .thenReturn(cliente);
@@ -51,4 +48,41 @@ public class ServicioSuscripcionTest {
         assertThat(resultado, is(false));
 
     }
+    @Test
+    public void dadoQueExistaUnClientePuedaVerSuTipoDeSuscripcion() {
+
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+        cliente.setTipoSuscripcion("Básica");
+
+        when(repositorioCliente.obtenerPorDni(12345678)).thenReturn(cliente);
+        Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+
+        assertThat(clienteActualizado.getTipoSuscripcion(), is("Básica"));
+
+    }
+
+    @Test
+    public void dadoQueExistaUnClientePuedaContratarUnaNuevaSuscripcion() {
+
+        Cliente cliente = new Cliente();
+        cliente.setDni(12345678);
+
+        servicioSuscripcion.registrarCliente(cliente);
+        when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+        Cliente clienteBuscado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+        //enviar en el metodo dni y la suscripcion que se quiere contratar, sino siemnpre devuelve verdadero
+
+        clienteBuscado.setTipoSuscripcion("Premium");
+        servicioSuscripcion.actualizarCliente(clienteBuscado);
+
+        Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(clienteBuscado.getDni());
+
+        assertThat(clienteActualizado.getTipoSuscripcion(), is("Premium"));
+
+    }
+
+    //probar que no se pueda contratar una suscripcion si si el cliente ya tiene una suscripcion activa del mismo tipo
+
+    //
 }

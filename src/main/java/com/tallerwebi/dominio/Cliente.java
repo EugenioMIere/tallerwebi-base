@@ -47,4 +47,8 @@ public class Cliente {
     public void setTipoSuscripcion(String premium) {
         this.tipoSuscripcion = premium;
     }
+
+    public String getTipoSuscripcion() {
+        return tipoSuscripcion;
+    }
 }

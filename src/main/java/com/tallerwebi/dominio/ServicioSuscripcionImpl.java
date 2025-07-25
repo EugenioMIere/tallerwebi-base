@@ -22,4 +22,21 @@ public class ServicioSuscripcionImpl implements ServicioSuscripcion {
 
         return true;
     }
+
+    @Override
+    public Cliente obtenerClientePorDni(int dni) {
+    Cliente cliente = repositorioCliente.obtenerPorDni(dni);
+
+        if (cliente == null) {
+            throw new RuntimeException("Cliente no encontrado con DNI: " + dni);
+        }
+        return cliente;
+    }
+
+    @Override
+    public void actualizarCliente(Cliente cliente) {
+
+    }
+
+
 }

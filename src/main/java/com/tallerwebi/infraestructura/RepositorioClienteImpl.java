@@ -66,9 +66,6 @@ public class RepositorioClienteImpl implements RepositorioCliente {
     @Override
     public void suscribir(int dni, String tipoSuscripcion) {
         Cliente cliente = this.obtenerPorDni(dni);
-        if (cliente == null) {
-            throw new RuntimeException("Cliente no encontrado con DNI: " + dni);
-        }
         cliente.setTipoSuscripcion(tipoSuscripcion);
         this.sessionFactory.getCurrentSession().update(cliente);
 

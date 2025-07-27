@@ -2,52 +2,79 @@ package com.tallerwebi.presentacion;
 
 import com.tallerwebi.dominio.Cliente;
 import com.tallerwebi.dominio.ServicioSuscripcion;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import java.util.List;
 
+@Controller
 public class ControladorSuscripcion {
-    private  ServicioSuscripcion servicioSuscripcion;
+    private ServicioSuscripcion servicioSuscripcion;
 
+    @Autowired
     public ControladorSuscripcion(ServicioSuscripcion servicioSuscripcion) {
         this.servicioSuscripcion = servicioSuscripcion;
     }
 
-    public ModelAndView suscribirCliente(int dni, String suscripcion) {
-        this.servicioSuscripcion.suscribirCliente(dni, suscripcion);
-
-        return new ModelAndView("historial-suscripcion");
-    }
-
-    public ModelAndView obtenerporTipoSuscripcion(String tipoSuscripcion) {
-
-        List<Cliente> clientes = this.servicioSuscripcion.ObtenerporTipoSuscripcion(tipoSuscripcion);
-        if (clientes == null || clientes.isEmpty()) {
-            return new ModelAndView("historial-suscripcion", new ModelMap("error", "No se encontraron clientes con la suscripción: " + tipoSuscripcion));
+    @RequestMapping("/suscripcion")
+    public ModelAndView irAPaginaSuscripcion(@RequestParam(value = "exito", required = false) String exito) {
+        ModelMap modelo = new ModelMap();
+        if (exito != null) {
+            modelo.put("mensaje", "Suscripción exitosa");
         }
-        ModelMap clienteModel = new ModelMap();
-        clienteModel.put("clientes", clientes);
+        return new ModelAndView("suscripcion", modelo);
+    }
 
-        return new ModelAndView("historial-suscripcion", clienteModel);
+    @RequestMapping(value = "/suscribir-cliente", method = RequestMethod.POST)
+    public ModelAndView suscribirCliente(int dni, String suscripcion) {
+        try {
+            servicioSuscripcion.suscribirCliente(dni, suscripcion);
+            return new ModelAndView("redirect:/suscripcion?exito");
+        } catch (RuntimeException e) {
+            ModelMap modelo = new ModelMap();
+            modelo.put("error", e.getMessage());
+            modelo.put("dni", dni);
+            modelo.put("suscripcionSeleccionada", suscripcion);
+            return new ModelAndView("suscripcion", modelo);
+        }
+    }
+
+    @RequestMapping(value = "/tipo-suscripcion", method = RequestMethod.POST)
+    public ModelAndView obtenerporTipoSuscripcion(String tipoSuscripcion) {
+        ModelMap model = new ModelMap();
+        try {
+            List<Cliente> clientes = this.servicioSuscripcion.ObtenerporTipoSuscripcion(tipoSuscripcion);
+            model.put("clientes", clientes);
+        } catch (RuntimeException e) {
+            model.put("error", e.getMessage());
+        }
+        if (tipoSuscripcion == null) {
+            return new ModelAndView("redirect:/obtener-todos");
+        }
+        return new ModelAndView("historial-suscripcion", model);
 
     }
 
+    @RequestMapping(value = "/eliminar-suscripcion", method = RequestMethod.POST)
     public ModelAndView eliminarSuscripcion(int dni) {
         this.servicioSuscripcion.eliminarSuscripcion(dni);
-        ModelMap model = new ModelMap();
-        model.put("mensaje", "Suscripción eliminada correctamente");
-        return new ModelAndView("historial-suscripcion", model);
+        return new ModelAndView("redirect:/obtener-todos");
     }
 
+    @RequestMapping("/obtener-todos")
     public ModelAndView obtenerTodos() {
-        List<Cliente> clientes = this.servicioSuscripcion.obtenerTodos();
-        if (clientes == null || clientes.isEmpty()) {
-            return new ModelAndView("historial-suscripcion", new ModelMap("error", "No se encontraron clientes"));
+        ModelMap modelo = new ModelMap();
+        try {
+            List<Cliente> clientes = this.servicioSuscripcion.obtenerTodos();
+            modelo.put("clientes", clientes);
+        } catch (RuntimeException e) {
+            modelo.put("error", e.getMessage());
         }
-        ModelMap clienteModel = new ModelMap();
-        clienteModel.put("clientes", clientes);
-
-        return new ModelAndView("historial-suscripcion", clienteModel);
+        return new ModelAndView("historial-suscripcion", modelo);
     }
 }

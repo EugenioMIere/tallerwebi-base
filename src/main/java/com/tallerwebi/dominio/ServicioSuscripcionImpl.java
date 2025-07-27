@@ -40,13 +40,16 @@ public class ServicioSuscripcionImpl implements ServicioSuscripcion {
         Cliente cliente = repositorioCliente.obtenerPorDni(dni);
 
         if (cliente == null) {
-            return "Cliente no encontrado con DNI: " + dni;
+            cliente = new Cliente();
+            cliente.setDni(dni);
+            repositorioCliente.crear(cliente);
         }
-        if (tipoSuscripcion != null && tipoSuscripcion.equals(cliente.getTipoSuscripcion())) {
-            return "Suscripción ok";
+        if (tipoSuscripcion.equals(cliente.getTipoSuscripcion())) {
+            throw new RuntimeException("Cliente ya está suscrito al plan: " + tipoSuscripcion);
+
         }
 
-        cliente.setTipoSuscripcion(tipoSuscripcion);
+        //cliente.setTipoSuscripcion(tipoSuscripcion);
         repositorioCliente.suscribir(dni, tipoSuscripcion);
 
         return "Suscripción ok";

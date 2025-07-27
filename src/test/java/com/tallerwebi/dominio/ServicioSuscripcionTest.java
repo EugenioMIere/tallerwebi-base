@@ -10,6 +10,7 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 public class ServicioSuscripcionTest {
@@ -87,6 +88,11 @@ public class ServicioSuscripcionTest {
         cliente.setDni(12345678);
 
         when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+        doAnswer(invocation -> {
+            cliente.setTipoSuscripcion("Premium");
+            return null;
+        }).when(repositorioCliente).suscribir(cliente.getDni(), "Premium");
+
         servicioSuscripcion.suscribirCliente(cliente.getDni(), "Premium");
         Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
 
@@ -97,39 +103,41 @@ public class ServicioSuscripcionTest {
 
     @Test
     public void dadoQueExistaUnClienteConUnaSuscripcionActivaDelMismoTipoNoPuedaContratarUnaNuevaSuscripcion() {
-
         Cliente cliente = new Cliente();
         cliente.setDni(12345678);
         cliente.setTipoSuscripcion("Básica");
 
         when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
-        Cliente clienteBuscado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
-        String status = servicioSuscripcion.suscribirCliente(clienteBuscado.getDni(), "Básica");
-        Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(clienteBuscado.getDni());
 
-        verify(repositorioCliente, never()).suscribir(clienteBuscado.getDni(), clienteBuscado.getTipoSuscripcion());
-        assertThat(status, is("Suscripción ok"));
-        assertThat(clienteActualizado.getTipoSuscripcion(), is("Básica"));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            servicioSuscripcion.suscribirCliente(cliente.getDni(), "Básica");
+        });
 
-
+        assertThat(exception.getMessage(), is("Cliente ya está suscrito al plan: Básica"));
+        verify(repositorioCliente, never()).suscribir(cliente.getDni(), "Básica");
     }
+
     @Test
     public void dadoQueExistaUnClienteConUnaSuscripcionActivaDeDistintoTipoPuedaContratarUnaNuevaSuscripcion() {
-
         Cliente cliente = new Cliente();
         cliente.setDni(12345678);
         cliente.setTipoSuscripcion("Básica");
 
         when(repositorioCliente.obtenerPorDni(cliente.getDni())).thenReturn(cliente);
+
+        doAnswer(invocation -> {
+            cliente.setTipoSuscripcion("Premium");
+            return null;
+        }).when(repositorioCliente).suscribir(cliente.getDni(), "Premium");
+
         Cliente clienteBuscado = servicioSuscripcion.obtenerClientePorDni(cliente.getDni());
+
         String status = servicioSuscripcion.suscribirCliente(clienteBuscado.getDni(), "Premium");
         Cliente clienteActualizado = servicioSuscripcion.obtenerClientePorDni(clienteBuscado.getDni());
 
         verify(repositorioCliente).suscribir(12345678, "Premium");
         assertThat(status, is("Suscripción ok"));
         assertThat(clienteActualizado.getTipoSuscripcion(), is("Premium"));
-
-
     }
 
     @Test

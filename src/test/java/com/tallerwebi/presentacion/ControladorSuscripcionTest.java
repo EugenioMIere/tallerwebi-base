@@ -24,14 +24,39 @@ public class ControladorSuscripcionTest {
     }
 
     @Test
-    public void suscripcionCliente() {
+    public void queSeMuestreMensajeDeExitoAlSuscribirse() {
+        ModelAndView modelAndView = controladorSuscripcion.irAPaginaSuscripcion("exito");
 
-         when(servicioSuscripcion.suscribirCliente(12345678, "Básica"))
-                 .thenReturn("crear-carta");
+        String vistaEsperada = "suscripcion";
+        assertThat(modelAndView.getViewName(), equalTo(vistaEsperada));
+        assertThat(modelAndView.getModel().get("mensaje"), is("Suscripción exitosa"));
+    }
+    @Test
+    public void queNoSeMuestreMensajeSiNoHayExito() {
+        ModelAndView modelAndView = controladorSuscripcion.irAPaginaSuscripcion(null);
+
+        String vistaEsperada = "suscripcion";
+        assertThat(modelAndView.getViewName(), equalTo(vistaEsperada));
+        assertThat(modelAndView.getModel().get("mensaje"), is((Object) null));
+    }
+
+    @Test
+    public void queSePuedaSuscribirUnCliente() {
+        ModelAndView modelAndView = controladorSuscripcion.suscribirCliente(12345678, "Básica");
+
+        String vistaEsperada = "redirect:/suscripcion?exito";
+        verify(servicioSuscripcion).suscribirCliente(12345678, "Básica");
+        assertThat(vistaEsperada, equalTo(modelAndView.getViewName()));
+    }
+    @Test
+    public void dadoQueUnClienteexistenteYaPoseaMismoTipoDeSuscripcionArrojeError() {
+        doAnswer(invocation -> {
+            throw new RuntimeException("Cliente ya está suscrito al plan: Básica");
+        }).when(servicioSuscripcion).suscribirCliente(12345678, "Básica");
 
         ModelAndView modelAndView = controladorSuscripcion.suscribirCliente(12345678, "Básica");
 
-        String vistaEsperada = "historial-suscripcion";
+        String vistaEsperada = "suscripcion";
         verify(servicioSuscripcion).suscribirCliente(12345678, "Básica");
         assertThat(vistaEsperada, equalTo(modelAndView.getViewName()));
     }
@@ -52,9 +77,16 @@ public class ControladorSuscripcionTest {
         assertThat(modelAndView.getModel().get("clientes"), is(List.of(cliente)));
     }
     @Test
+    public void queSeRedirijaAObtenerTodosCuandoNoSeleccionoTipoDeSuscripcion() {
+        ModelAndView modelAndView = controladorSuscripcion.obtenerporTipoSuscripcion(null);
+
+        String vistaEsperada = "redirect:/obtener-todos";
+        assertThat(modelAndView.getViewName(), equalTo(vistaEsperada));
+    }
+    @Test
     public void dadoQueNoSeEncuentranClientesPorTipoDeSuscripcionCuandoObtengoClientesPorTipoDeSuscripcionEntoncesObtengoUnMensajeDeError() {
         when(servicioSuscripcion.ObtenerporTipoSuscripcion("Premium"))
-                .thenReturn(List.of());
+                .thenThrow(new RuntimeException("No se encontraron clientes con la suscripción: Premium"));
 
         ModelAndView modelAndView = controladorSuscripcion.obtenerporTipoSuscripcion("Premium");
 
@@ -64,19 +96,18 @@ public class ControladorSuscripcionTest {
     }
 
     @Test
-    public void dadoQueSePuedeEliminarUnaSuscripcionCuandoEliminoUnaSuscripcionEntoncesObtengoUnMensajeDeExito() {
+    public void dadoQueSePuedeEliminarUnaSuscripcionCuandoEliminoUnaSuscripcionEntoncesRedirijoAObtenerTodos() {
         int dni = 12345678;
 
         doNothing().when(servicioSuscripcion).eliminarSuscripcion(dni);
 
         ModelAndView modelAndView = controladorSuscripcion.eliminarSuscripcion(dni);
 
-        String vistaEsperada = "historial-suscripcion";
+        String vistaEsperada = "redirect:/obtener-todos";
         verify(servicioSuscripcion).eliminarSuscripcion(dni);
         assertThat(vistaEsperada, equalTo(modelAndView.getViewName()));
 
     }
-    //obtenerTodos
     @Test
     public void dadoQueSePuedenObtenerTodosLosClientesCuandoObtengoTodosLosClientesEntoncesDevuelvoUnaListaDeClientes() {
         Cliente cliente1 = mock(Cliente.class);
@@ -93,7 +124,7 @@ public class ControladorSuscripcionTest {
     }
     @Test
     public void dadoQueNoSeEncuentranClientesCuandoObtengoTodosLosClientesEntoncesObtengoUnMensajeDeError() {
-        when(servicioSuscripcion.obtenerTodos()).thenReturn(List.of());
+        when(servicioSuscripcion.obtenerTodos()).thenThrow(new RuntimeException("No se encontraron clientes"));
 
         ModelAndView modelAndView = controladorSuscripcion.obtenerTodos();
 

@@ -47,11 +47,12 @@ public class ServicioProductoTest {
         assertThat(productosConStockMayorA10.get(0), is(producto));
         assertThat(productosConStockMayorA10.get(1), is(producto2));
     }
+
     @Test
     public void dadoQueIngresoUnStockNegativoEntoncesMeDeberaLanzarUnaExcepcion() {
         // Arrange
         int stockNegativo = -5;
-        String mensajeEsperado = "El stock debe ser mayor a cero";
+        String mensajeEsperado = "El stock consultado debe ser mayor a cero";
         // Act
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             servicioProducto.buscarPorCantidad(stockNegativo);
@@ -59,5 +60,37 @@ public class ServicioProductoTest {
         // Assert
         assertThat(exception.getMessage(), is(mensajeEsperado));
         verify(repositorioProducto, never()).buscarPorCantidad(stockNegativo);
+    }
+
+    @Test
+    public void dadoQueIngresoUnStockQueNoPoseeProductosEntoncesMeDeberaLanzarUnaExcepcion() {
+        // Arrange
+        int stock = 10;
+        String mensajeEsperado = "No se encontraron productos con stock mayor a " + stock;
+
+        when(repositorioProducto.buscarPorCantidad(stock)).thenReturn(Arrays.asList());
+
+        // Act
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            servicioProducto.buscarPorCantidad(stock);
+        });
+
+        // Assert
+        assertThat(exception.getMessage(), is(mensajeEsperado));
+        verify(repositorioProducto).buscarPorCantidad(stock);
+    }
+
+    @Test
+    public void dadoQueIngresoUnStockMenorACeroEntoncesMeDeberaLanzarUnaExcepcion() {
+        // Arrange
+        int stockCero = -1;
+        String mensajeEsperado = "El stock consultado debe ser mayor a cero";
+        // Act
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            servicioProducto.buscarPorCantidad(stockCero);
+        });
+        // Assert
+        assertThat(exception.getMessage(), is(mensajeEsperado));
+        verify(repositorioProducto, never()).buscarPorCantidad(stockCero);
     }
 }

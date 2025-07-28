@@ -15,7 +15,7 @@ public class ServicioProductoImpl implements ServicioProducto {
     @Override
     public List<Producto> buscarPorCantidad(int stock) {
 
-        if (stock > 0) {
+        if (stock >= 0) {
             List<Producto> productos = this.repositorioProducto.buscarPorCantidad(stock);
             if (!productos.isEmpty()) {
                 return productos;

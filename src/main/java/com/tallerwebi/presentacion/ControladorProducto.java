@@ -20,10 +20,7 @@ public class ControladorProducto {
     }
     @RequestMapping("/productos")
     public ModelAndView irAPaginaProductos() {
-        ModelMap modelo = new ModelMap();
-        /*List<Producto> productos = this.servicioProducto.buscarPorCantidad(0); // Por defecto, mostrar todos los productos
-        modelo.put("productos", productos); */
-        return new ModelAndView("productos", modelo);
+        return new ModelAndView("productos");
     }
 
     @RequestMapping("/productos/stock/{cantidad}")

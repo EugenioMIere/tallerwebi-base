@@ -22,6 +22,16 @@ public class ControladorProductoTest {
         controladorProducto = new ControladorProducto(servicioProducto);
     }
 
+    @Test
+    public void dadoQueSePuedaIrAPaginaProductosEntoncesSePuedaObtenerUnaVistaDeProductos() {
+        ModelAndView vistaEsperada = new ModelAndView("productos");
+
+        ModelAndView vistaObtenida = controladorProducto.irAPaginaProductos();
+
+        assertThat(vistaObtenida.getViewName(), is(vistaEsperada.getViewName()));
+        assertThat(vistaObtenida.getModel().size(), is(0));
+    }
+
 
     @Test
     public void dadoQueSePuedaBuscarProductosMayoresAUnStockEntoncesSePuedaObtenerUnaListaDeProductosPorPathParam() {
@@ -48,6 +58,42 @@ public class ControladorProductoTest {
 
     }
     @Test
+    public void dadoQueSePuedaBuscarProductosMayoresAUnStockSiIngresoUnaCantidadNoExistenteArrojaErrorNoSeEncontraronConMayorStockPorPathParam() {
+
+        int stock = 10;
+
+        doAnswer(invocation -> {
+            throw new RuntimeException("No se encontraron productos con stock mayor a " + stock);
+        }).when(servicioProducto).buscarPorCantidad(stock);
+
+        // Act
+        ModelAndView vistaEsperada = controladorProducto.buscarStockMayoresPorPathParam(stock);
+
+        // Assert
+        verify(servicioProducto, times(1)).buscarPorCantidad(stock);
+        assertThat(vistaEsperada.getViewName(), is("productos"));
+        assertThat(vistaEsperada.getModel().get("error"), is("No se encontraron productos con stock mayor a 10"));
+    }
+    @Test
+    public void dadoQueSePuedaBuscarProductosMayoresAUnStockSiIngresoUnaCantidadNegativaLanzaExcepcionPorPathParam() {
+
+        int stock = -1;
+
+        doAnswer(invocation -> {
+            throw new IllegalArgumentException("El stock consultado debe ser mayor a cero");
+        }).when(servicioProducto).buscarPorCantidad(stock);
+
+        // Act
+        ModelAndView vistaEsperada = controladorProducto.buscarStockMayoresPorPathParam(stock);
+
+        // Assert
+        verify(servicioProducto, times(1)).buscarPorCantidad(stock);
+        assertThat(vistaEsperada.getViewName(), is("productos"));
+        assertThat(vistaEsperada.getModel().get("error"), is("El stock consultado debe ser mayor a cero"));
+    }
+
+
+    @Test
     public void dadoQueSePuedaBuscarProductosMayoresAUnStockEntoncesSePuedaObtenerUnaListaDeProductosPorPost() {
         // Arrange
         int stock = 10;
@@ -70,5 +116,40 @@ public class ControladorProductoTest {
         assertThat(productos.getViewName(), is("productos"));
         assertThat(productos.getModel().size(), is(1));
 
+    }
+    @Test
+    public void dadoQueSePuedaBuscarProductosMayoresAUnStockSiIngresoUnaCantidadNoExistenteArrojaErrorNoSeEncontraronConMayorStockPorPost() {
+
+        int stock = 10;
+
+        doAnswer(invocation -> {
+            throw new RuntimeException("No se encontraron productos con stock mayor a " + stock);
+        }).when(servicioProducto).buscarPorCantidad(stock);
+
+        // Act
+        ModelAndView vistaEsperada = controladorProducto.buscarStockMayoresPorPost(stock);
+
+        // Assert
+        verify(servicioProducto, times(1)).buscarPorCantidad(stock);
+        assertThat(vistaEsperada.getViewName(), is("productos"));
+        assertThat(vistaEsperada.getModel().get("error"), is("No se encontraron productos con stock mayor a 10"));
+    }
+
+    @Test
+    public void dadoQueSePuedaBuscarProductosMayoresAUnStockSiIngresoUnaCantidadNegativaLanzaExcepcionPorPost() {
+
+        int stock = -1;
+
+        doAnswer(invocation -> {
+            throw new IllegalArgumentException("El stock consultado debe ser mayor a cero");
+        }).when(servicioProducto).buscarPorCantidad(stock);
+
+        // Act
+        ModelAndView vistaEsperada = controladorProducto.buscarStockMayoresPorPost(stock);
+
+        // Assert
+        verify(servicioProducto, times(1)).buscarPorCantidad(stock);
+        assertThat(vistaEsperada.getViewName(), is("productos"));
+        assertThat(vistaEsperada.getModel().get("error"), is("El stock consultado debe ser mayor a cero"));
     }
 }
